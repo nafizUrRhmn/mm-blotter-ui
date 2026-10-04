@@ -1,0 +1,51 @@
+<div class="card">
+  <button
+    class="btn card-header d-flex align-items-center justify-content-between w-100 text-start bg-body-tertiary fw-semibold"
+    type="button"
+    (click)="toggle()"
+  >
+    <span>{{ card().title }}</span>
+    <span class="d-inline-flex align-items-center gap-2">
+      <span class="fw-bold" [class.text-success]="card().total >= 0" [class.text-danger]="card().total < 0">
+        {{ card().total | crore: true }}
+      </span>
+      <app-icon name="chevron-down" size="14" [class.rotate-neg-90]="!open()" />
+    </span>
+  </button>
+
+  @if (open()) {
+    <div class="table-responsive">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Deal no.</th>
+            <th scope="col">Counterparty</th>
+            <th scope="col">Type</th>
+            <th scope="col" class="text-end">Volume</th>
+            <th scope="col" class="text-end">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (deal of card().deals; track deal.dealNo + deal.counterparty) {
+            <tr>
+              <td class="text-body-tertiary">{{ deal.dealNo }}</td>
+              <td>
+                {{ deal.counterparty }}
+                @if (deal.forecast) {
+                  <span class="text-primary fw-bold">*</span>
+                }
+              </td>
+              <td><span class="badge rounded-pill" [ngClass]="typeClass(deal.type)">{{ deal.type }}</span></td>
+              <td class="text-end fw-semibold" [class.text-success]="deal.volume >= 0" [class.text-danger]="deal.volume < 0">
+                {{ deal.volume | crore: true }}
+              </td>
+              <td class="text-end">
+                <span class="badge rounded-pill" [ngClass]="statusClass(deal.status)">{{ deal.status }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

@@ -1,0 +1,257 @@
+<div class="d-flex align-items-center justify-content-center" style="min-height: 100vh">
+  <div class="w-100 p-4 p-md-5" style="max-width: 440px">
+    <div class="d-flex align-items-center gap-3 mb-5">
+      <div
+        class="d-inline-flex align-items-center justify-content-center rounded-circle bg-dark text-white fw-bold flex-shrink-0"
+        style="width: 44px; height: 44px"
+      >
+        {{ nav.workspace().code }}
+      </div>
+      <div>
+        <div class="fw-bold">{{ nav.workspace().name }}</div>
+        <div class="text-muted small">Treasury &amp; Money Market Console</div>
+      </div>
+    </div>
+
+    <h1 class="fs-3 fw-bold mb-2">{{ heading().title }}</h1>
+    <p class="text-muted mb-4">{{ heading().text }}</p>
+
+    @if (info()) {
+      <div class="alert alert-info py-2 small" role="status">{{ info() }}</div>
+    }
+    @if (error()) {
+      <div class="alert alert-danger py-2 small" role="alert">{{ error() }}</div>
+    }
+
+    @switch (step()) {
+      @case ('credentials') {
+        <form class="d-flex flex-column gap-4" (ngSubmit)="submit()" novalidate>
+          <div>
+            <label class="form-label small fw-semibold text-muted" for="login-username"
+              >Username</label
+            >
+            <div class="input-group">
+              <span class="input-group-text bg-body"><app-icon name="user" size="16" /></span>
+              <input
+                id="login-username"
+                type="text"
+                class="form-control"
+                name="username"
+                placeholder="Your ACS username"
+                autocomplete="username"
+                [(ngModel)]="username"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label small fw-semibold text-muted" for="login-password"
+              >Password</label
+            >
+            <div class="input-group">
+              <span class="input-group-text bg-body"
+                ><app-icon name="check-square" size="16"
+              /></span>
+              <input
+                id="login-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="form-control"
+                name="password"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                [(ngModel)]="password"
+                required
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                {{ showPassword() ? 'Hide' : 'Show' }}
+              </button>
+            </div>
+          </div>
+
+          <button class="btn btn-dark py-2" type="submit" [disabled]="submitting()">
+            {{ submitting() ? 'Signing in…' : 'Sign in' }}
+          </button>
+        </form>
+      }
+
+      @case ('mfa-enrol') {
+        @if (enrolmentLoading()) {
+          <p class="text-muted small">Preparing your authenticator set-up…</p>
+        }
+        @if (enrolment(); as e) {
+          <div class="d-flex flex-column gap-3 mb-4">
+            @if (e.qrCodeDataUri) {
+              <div class="text-center">
+                <img
+                  class="border rounded bg-white p-2"
+                  [src]="e.qrCodeDataUri"
+                  width="200"
+                  height="200"
+                  [alt]="'QR code for ' + e.issuer + ' (' + e.accountName + ')'"
+                />
+              </div>
+            }
+            <div>
+              <div class="small fw-semibold text-muted mb-1">
+                {{
+                  e.qrCodeDataUri
+                    ? "Can't scan it? Enter this key instead"
+                    : 'Enter this key in your authenticator app'
+                }}
+              </div>
+              <div class="input-group">
+                <code
+                  class="form-control font-monospace text-body user-select-all text-break"
+                  data-testid="mfa-secret"
+                  >{{ groupedSecret() }}</code
+                >
+                <button class="btn btn-outline-secondary" type="button" (click)="copySecret()">
+                  {{ copied() ? 'Copied' : 'Copy' }}
+                </button>
+              </div>
+              <div class="small text-muted mt-1">
+                Account {{ e.accountName }} · {{ e.issuer }} ·
+                <a [href]="e.otpauthUri">Open in authenticator app</a>
+              </div>
+            </div>
+          </div>
+        }
+        <form class="d-flex flex-column gap-4" (ngSubmit)="verifyCode()" novalidate>
+          <ng-container *ngTemplateOutlet="totpField" />
+          <button class="btn btn-dark py-2" type="submit" [disabled]="submitting() || !enrolment()">
+            {{ submitting() ? 'Verifying…' : 'Verify and sign in' }}
+          </button>
+        </form>
+      }
+
+      @case ('mfa-code') {
+        <form class="d-flex flex-column gap-4" (ngSubmit)="verifyCode()" novalidate>
+          <ng-container *ngTemplateOutlet="totpField" />
+          <button class="btn btn-dark py-2" type="submit" [disabled]="submitting()">
+            {{ submitting() ? 'Verifying…' : 'Verify' }}
+          </button>
+        </form>
+      }
+
+      @case ('change-password') {
+        <form class="d-flex flex-column gap-4" (ngSubmit)="changePassword()" novalidate>
+          <input
+            type="text"
+            class="d-none"
+            name="username"
+            autocomplete="username"
+            [value]="username"
+            readonly
+          />
+          <div>
+            <label class="form-label small fw-semibold text-muted" for="login-new-password"
+              >New password</label
+            >
+            <input
+              id="login-new-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              class="form-control"
+              name="newPassword"
+              autocomplete="new-password"
+              [ngModel]="newPassword()"
+              (ngModelChange)="newPassword.set($event)"
+              required
+            />
+          </div>
+          <div>
+            <label class="form-label small fw-semibold text-muted" for="login-confirm-password"
+              >Confirm new password</label
+            >
+            <div class="input-group">
+              <input
+                id="login-confirm-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="form-control"
+                name="confirmPassword"
+                autocomplete="new-password"
+                [(ngModel)]="confirmPassword"
+                required
+              />
+              <button
+                class="btn btn-outline-secondary"
+                type="button"
+                (click)="togglePasswordVisibility()"
+                [attr.aria-label]="showPassword() ? 'Hide passwords' : 'Show passwords'"
+              >
+                {{ showPassword() ? 'Hide' : 'Show' }}
+              </button>
+            </div>
+          </div>
+
+          @if (checks().length) {
+            <ul class="list-unstyled small mb-0" aria-label="Password rules">
+              @for (c of checks(); track c.label) {
+                <li [class.text-success]="c.ok === true" [class.text-muted]="c.ok !== true">
+                  <app-icon
+                    [name]="c.ok === true ? 'check' : c.ok === false ? 'x' : 'lock'"
+                    size="12"
+                  />
+                  {{ c.label }}
+                </li>
+              }
+            </ul>
+          }
+          @if (violations().length) {
+            <ul class="small text-danger mb-0 ps-3" aria-label="Problems with the new password">
+              @for (v of violations(); track v) {
+                <li>{{ v }}</li>
+              }
+            </ul>
+          }
+
+          @if (passwordNeedsTotp()) {
+            <ng-container *ngTemplateOutlet="totpField" />
+          }
+
+          <button class="btn btn-dark py-2" type="submit" [disabled]="submitting()">
+            {{ submitting() ? 'Changing password…' : 'Change password and sign in' }}
+          </button>
+        </form>
+      }
+    }
+
+    @if (step() !== 'credentials') {
+      <div class="text-center mt-3">
+        <button class="btn btn-link btn-sm" type="button" (click)="backToSignIn()">
+          <app-icon name="chevron-left" size="14" /> Back to sign in
+        </button>
+      </div>
+    }
+
+    <ng-template #totpField>
+      <div>
+        <label class="form-label small fw-semibold text-muted" for="login-totp">6-digit code</label>
+        <input
+          id="login-totp"
+          type="text"
+          class="form-control font-monospace fs-5 text-center"
+          style="letter-spacing: 0.3em"
+          name="totpCode"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="6"
+          autocomplete="one-time-code"
+          placeholder="000000"
+          [(ngModel)]="totpCode"
+          required
+        />
+      </div>
+    </ng-template>
+
+    <p class="text-body-tertiary small text-center mt-4">
+      Access is restricted to authorized Treasury Office users. Accounts and passwords are managed
+      in the Access Control Service.
+    </p>
+  </div>
+</div>

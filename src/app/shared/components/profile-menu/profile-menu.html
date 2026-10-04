@@ -1,0 +1,45 @@
+<div class="dropdown">
+  <button
+    class="btn btn-dark rounded-circle p-0 d-inline-flex align-items-center justify-content-center fw-bold"
+    style="width: 36px; height: 36px; font-size: 0.78rem;"
+    type="button"
+    aria-label="Account"
+    [attr.aria-expanded]="open()"
+    (click)="toggle()"
+  >
+    {{ profile().initials }}
+  </button>
+
+  <div class="dropdown-menu dropdown-menu-end p-3 shadow-lg profile-menu-panel" [class.show]="open()" role="menu">
+    <div class="d-flex align-items-start gap-3 flex-shrink-0">
+      <div
+        class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary-subtle text-primary-emphasis fw-bold flex-shrink-0"
+        style="width: 40px; height: 40px; font-size: 0.85rem;"
+      >
+        {{ profile().initials }}
+      </div>
+      <div style="min-width: 0;">
+        <div class="fw-bold text-truncate">{{ profile().name }}</div>
+        <div class="text-muted small text-truncate">{{ profile().email }}</div>
+        <div class="text-body-tertiary small mt-1">{{ profile().role }}</div>
+      </div>
+    </div>
+
+    <hr class="my-3 flex-shrink-0" />
+
+    <div class="d-flex flex-column gap-1 overflow-y-auto">
+      @for (item of menuItems; track item.id) {
+        <button
+          class="btn text-start d-flex align-items-center gap-2"
+          [class.text-danger]="item.danger"
+          type="button"
+          role="menuitem"
+          (click)="select(item)"
+        >
+          <app-icon [name]="item.icon" size="16" />
+          <span>{{ item.label }}</span>
+        </button>
+      }
+    </div>
+  </div>
+</div>

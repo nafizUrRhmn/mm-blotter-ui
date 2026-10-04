@@ -1,0 +1,42 @@
+.instrument-row-btn {
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 0.5rem;
+  // Bootstrap's base .btn rule adds a 1px solid border; reset it so rows
+  // read as plain list rows instead of individually boxed buttons.
+  border: none;
+  border-radius: 0;
+
+  &:focus,
+  &:focus-visible {
+    box-shadow: none;
+  }
+
+  &.expandable {
+    cursor: pointer;
+
+    &:hover {
+      color: var(--bs-primary);
+    }
+  }
+
+  &:disabled {
+    opacity: 1;
+  }
+}
+
+.instrument-table tbody tr:not(:last-child) > td {
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+}
+
+.instrument-table tbody tr:last-child > td {
+  border-bottom: none;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+  transition: transform 150ms ease;
+}
+
+.instrument-table thead th {
+  border-bottom-width: 1px;
+}

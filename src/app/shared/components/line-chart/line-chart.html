@@ -1,0 +1,43 @@
+<div class="line-chart">
+  <svg
+    #svgEl
+    [attr.viewBox]="viewBox"
+    preserveAspectRatio="none"
+    class="line-chart__svg"
+    (mousemove)="onMove($event, svgEl)"
+    (mouseleave)="onLeave()"
+  >
+    <defs>
+      <linearGradient [attr.id]="'lineFill'" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" [attr.stop-color]="color()" stop-opacity="0.28" />
+        <stop offset="100%" [attr.stop-color]="color()" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+
+    <path [attr.d]="areaPath()" fill="url(#lineFill)" stroke="none" />
+    <path [attr.d]="linePath()" fill="none" [attr.stroke]="color()" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+    @if (hovered(); as h) {
+      <line [attr.x1]="h.x" [attr.x2]="h.x" y1="0" y2="200" class="line-chart__crosshair" />
+      <circle [attr.cx]="h.x" [attr.cy]="h.y" r="4.5" [attr.fill]="color()" class="line-chart__dot" />
+    }
+
+    @for (p of points(); track p.label) {
+      <circle [attr.cx]="p.x" [attr.cy]="p.y" r="10" fill="transparent" />
+    }
+  </svg>
+
+  @if (hovered(); as h) {
+    <div class="line-chart__tooltip bg-dark text-white rounded shadow" [style.left.%]="(h.x / 600) * 100">
+      <span class="line-chart__tooltip-label opacity-75 small">{{ h.label }}</span>
+      <span class="fw-bold">{{ h.value | number }}{{ suffix() }}</span>
+    </div>
+  }
+
+  <div class="d-flex justify-content-between text-body-tertiary small mt-2">
+    @if (points().length) {
+      <span>{{ points()[0].label }}</span>
+      <span>{{ points()[points().length - 1].label }}</span>
+    }
+  </div>
+</div>

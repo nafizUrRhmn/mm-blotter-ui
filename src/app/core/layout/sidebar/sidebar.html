@@ -1,0 +1,100 @@
+<aside
+  class="sidebar d-flex flex-column flex-shrink-0 bg-body border-end"
+  [class.collapsed]="ui.sidebarCollapsed()"
+  [class.mobile-open]="ui.mobileSidebarOpen()"
+>
+  <div class="d-flex flex-column gap-1 p-3 border-bottom">
+    <a
+      class="d-flex align-items-center gap-2 text-decoration-none text-body rounded p-1 sidebar-workspace-link"
+      [routerLink]="nav.homeRoute()"
+      (click)="ui.closeMobileSidebar()"
+    >
+      <span
+        class="d-inline-flex align-items-center justify-content-center rounded-circle bg-dark text-white fw-bold flex-shrink-0"
+        style="width: 40px; height: 40px; font-size: 0.85rem;"
+      >{{ nav.workspace().code }}</span>
+      @if (!ui.sidebarCollapsed()) {
+        <span class="fw-bold text-truncate">{{ nav.workspace().name }}</span>
+      }
+    </a>
+    @if (!ui.sidebarCollapsed() && nav.canAccess(nav.workspace().switchRoute)) {
+      <a
+        class="text-muted text-decoration-none text-truncate small ms-5"
+        [routerLink]="nav.workspace().switchRoute"
+        (click)="ui.closeMobileSidebar()"
+      >
+        {{ nav.workspace().subtitle }}
+      </a>
+    }
+  </div>
+
+  <nav class="flex-fill p-2 d-flex flex-column gap-4 overflow-auto">
+    @for (section of nav.sections(); track section.id) {
+      <div>
+        @if (section.title && !ui.sidebarCollapsed()) {
+          <div class="sidebar-section-title text-uppercase text-muted fw-bold px-2 mb-2 small">
+            {{ section.title }}
+          </div>
+        }
+        <div class="d-flex flex-column gap-1">
+          @for (item of section.items; track item.id) {
+            @if (item.children?.length) {
+              <!-- Collapsible group (e.g. MM Blotter ▾) -->
+              <button
+                type="button"
+                class="sidebar-link sidebar-group btn d-flex align-items-center gap-3 px-3 py-2 rounded text-muted fw-medium text-start border-0 w-100"
+                [attr.aria-expanded]="isOpen(item)"
+                [title]="item.label"
+                (click)="toggleGroup(item)"
+              >
+                <app-icon [name]="item.icon" />
+                @if (!ui.sidebarCollapsed()) {
+                  <span class="text-truncate flex-fill">{{ item.label }}</span>
+                  <app-icon name="chevron-down" size="16" class="sidebar-chevron" [class.closed]="!isOpen(item)" />
+                }
+              </button>
+              @if (isOpen(item) && !ui.sidebarCollapsed()) {
+                <div class="d-flex flex-column gap-1 sidebar-children">
+                  @for (child of item.children; track child.id) {
+                    <ng-container *ngTemplateOutlet="link; context: { $implicit: child }" />
+                  }
+                </div>
+              }
+            } @else {
+              <ng-container *ngTemplateOutlet="link; context: { $implicit: item }" />
+            }
+          }
+        </div>
+      </div>
+    }
+  </nav>
+</aside>
+
+<ng-template #link let-item>
+  <a
+    class="sidebar-link d-flex align-items-center gap-3 px-3 py-2 rounded text-decoration-none text-muted fw-medium text-truncate"
+    [routerLink]="item.route"
+    routerLinkActive="active"
+    [title]="item.label"
+    (click)="ui.closeMobileSidebar()"
+  >
+    <app-icon [name]="item.icon" />
+    @if (!ui.sidebarCollapsed()) {
+      <span class="text-truncate flex-fill">{{ item.label }}</span>
+      <button
+        type="button"
+        class="btn btn-link p-0 border-0 sidebar-fav"
+        [class.is-fav]="nav.isFavorite(item.id)"
+        [attr.aria-label]="nav.isFavorite(item.id) ? 'Remove from Favorites' : 'Add to Favorites'"
+        [title]="nav.isFavorite(item.id) ? 'Remove from Favorites' : 'Add to Favorites'"
+        (click)="toggleFavorite($event, item.id)"
+      >
+        <app-icon name="star" size="15" />
+      </button>
+    }
+  </a>
+</ng-template>
+
+@if (ui.mobileSidebarOpen()) {
+  <div class="sidebar-scrim" (click)="ui.closeMobileSidebar()"></div>
+}

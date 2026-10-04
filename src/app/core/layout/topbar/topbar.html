@@ -1,0 +1,52 @@
+<header class="topbar d-flex align-items-center gap-3 gap-md-2 px-3 px-md-4 border-bottom bg-body sticky-top">
+  <button class="btn btn-icon topbar-menu d-none" type="button" (click)="ui.toggleMobileSidebar()" aria-label="Toggle menu">
+    <app-icon name="menu" />
+  </button>
+
+  <button class="btn btn-icon topbar-collapse" type="button" (click)="ui.toggleSidebar()" aria-label="Collapse sidebar">
+    <app-icon name="grid" />
+  </button>
+
+  <nav class="d-flex align-items-center gap-2 text-muted text-nowrap">
+    @for (crumb of breadcrumb(); track crumb; let last = $last) {
+      <span [class.text-body]="last" [class.fw-semibold]="last">{{ crumb }}</span>
+      @if (!last) {
+        <span class="text-body-tertiary">/</span>
+      }
+    }
+  </nav>
+
+  <div *appHasPermission="R.DEAL_VIEW" class="topbar-search d-flex align-items-center gap-2 bg-body-tertiary rounded-pill px-3 py-2 text-body-tertiary flex-fill">
+    <app-icon name="search" size="16" />
+    <input type="text" class="form-control form-control-sm border-0 bg-transparent shadow-none p-0" placeholder="Search deals, counterparties..." />
+  </div>
+
+  <div class="d-flex align-items-center gap-2 ms-auto">
+    <label class="btn btn-outline-secondary btn-sm rounded-pill d-flex align-items-center gap-2 topbar-date position-relative mb-0"
+      [class.border-warning]="!ui.isToday()" title="Blotter date — pick a past date to view its historic blotter">
+      <app-icon name="calendar" size="16" />
+      <span class="topbar-date-text">{{ ui.selectedDate() }}</span>
+      @if (!ui.isToday()) {
+        <span class="badge text-bg-warning">Historic</span>
+      }
+      <app-icon name="chevron-down" size="14" />
+      <input type="date" class="topbar-date-input" aria-label="Blotter date"
+        [value]="ui.date() ?? ''" [max]="ui.businessDate() ?? ''" (change)="pickDate($event)" />
+    </label>
+    @if (!ui.isToday()) {
+      <button class="btn btn-sm btn-link text-decoration-none px-1" type="button" (click)="ui.setViewDate(null)">Today</button>
+    }
+
+    <button class="btn btn-icon" type="button" (click)="theme.toggle()" aria-label="Toggle theme">
+      <app-icon [name]="theme.theme() === 'light' ? 'sun' : 'moon'" />
+    </button>
+
+    <button class="btn btn-icon" type="button" aria-label="Refresh" (click)="ui.refresh()">
+      <app-icon name="refresh-cw" />
+    </button>
+
+    <app-notification-panel />
+
+    <app-profile-menu />
+  </div>
+</header>

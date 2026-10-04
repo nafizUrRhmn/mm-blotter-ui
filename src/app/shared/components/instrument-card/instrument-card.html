@@ -1,0 +1,77 @@
+<div class="card h-100 hover-lift">
+  <div class="card-body d-flex flex-column">
+    <div class="d-flex align-items-center gap-3 mb-3">
+      @if (config().icon) {
+        <span class="icon-badge" [ngClass]="'text-bg-' + accent() + '-subtle text-' + accent() + '-emphasis'">
+          <app-icon [name]="config().icon!" size="18" />
+        </span>
+      }
+      <span class="fw-bold">{{ config().title }}</span>
+    </div>
+
+    <div class="table-responsive flex-fill">
+      <table class="table table-sm align-middle mb-0 instrument-table">
+        <thead>
+          <tr>
+            <th scope="col"></th>
+            <th scope="col" class="text-end text-uppercase text-muted small">{{ config().columnLabels[0] }}</th>
+            <th scope="col" class="text-end text-uppercase text-muted small">{{ config().columnLabels[1] }}</th>
+            <th scope="col" class="text-end text-uppercase text-muted small">{{ config().columnLabels[2] }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of config().rows; track row.key) {
+            <tr>
+              <td colspan="4" class="p-0">
+                <button
+                  class="btn instrument-row-btn w-100 d-grid text-start px-0 py-2"
+                  type="button"
+                  [class.expandable]="!!row.counterparties?.length"
+                  [disabled]="!row.counterparties?.length"
+                  (click)="row.counterparties?.length && toggleRow(row.key)"
+                >
+                  <span class="d-inline-flex align-items-center gap-2">
+                    @if (row.counterparties?.length) {
+                      <app-icon name="chevron-down" size="14" [class.rotate-180]="expandedRow() === row.key" />
+                    }
+                    {{ row.label }}
+                  </span>
+                  <span class="text-end">{{ row.col1 | crore: true }}</span>
+                  <span class="text-end">{{ row.col2 | crore: true }}</span>
+                  <span
+                    class="text-end fw-bold"
+                    [class.text-success]="row.net >= 0"
+                    [class.text-danger]="row.net < 0"
+                  >
+                    {{ row.net | crore: true }}
+                  </span>
+                </button>
+
+                @if (expandedRow() === row.key && row.counterparties?.length) {
+                  <div class="d-flex flex-column gap-2 ps-4 pb-2">
+                    @for (cp of row.counterparties; track cp.name) {
+                      <div class="d-flex justify-content-between small text-muted">
+                        <span>
+                          {{ cp.name }}
+                          @if (cp.forecast) {
+                            <span class="badge text-bg-primary-subtle text-primary-emphasis rounded-pill ms-2">Forecast</span>
+                          }
+                        </span>
+                        <span>{{ cp.amount | crore: true }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-between fw-bold border-top pt-3 mt-auto">
+      <span>{{ config().totalLabel }}</span>
+      <span [class.text-success]="total() >= 0" [class.text-danger]="total() < 0">{{ total() | crore: true }}</span>
+    </div>
+  </div>
+</div>

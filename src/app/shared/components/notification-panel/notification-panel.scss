@@ -1,0 +1,37 @@
+.notification-badge {
+  top: 2px;
+  right: 2px;
+  font-size: 0.62rem;
+}
+
+.notification-panel-menu {
+  width: 340px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 5rem);
+  flex-direction: column;
+
+  // We toggle `.show` manually via a signal instead of Bootstrap's JS
+  // Dropdown/Popper, so the `[data-bs-popper]`-gated alignment rules from
+  // `.dropdown-menu-end` never apply. Force right-alignment ourselves so
+  // the panel doesn't overflow past the viewport's right edge.
+  right: 0;
+  left: auto;
+
+  // IMPORTANT: only switch to flex display when Bootstrap's `.show` class
+  // is present. Bootstrap's base `.dropdown-menu` rule is `display: none`;
+  // an unconditional `display: flex` here would win over it (same
+  // specificity, later in cascade) and keep the panel permanently visible.
+  &.show {
+    display: flex;
+  }
+}
+
+.notification-panel-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.notification-item {
+  white-space: normal;
+}

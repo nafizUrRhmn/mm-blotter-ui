@@ -1,0 +1,68 @@
+<app-page-header title="Dashboard">
+  <button class="btn btn-outline-secondary btn-sm rounded-pill d-inline-flex align-items-center gap-2" type="button">
+    Today
+    <span>▾</span>
+  </button>
+</app-page-header>
+
+<div class="row g-4 mb-1">
+  @for (kpi of kpis(); track kpi.label) {
+    <div class="col-6 col-md-3">
+      <div class="card h-100 kpi-tile">
+        <div class="card-body d-flex flex-column gap-2">
+          <span class="text-muted small">{{ kpi.label }}</span>
+          <span class="fs-4 fw-bold">{{ kpi.value }}</span>
+          <span
+            class="small fw-semibold w-fit"
+            [class.text-muted]="kpi.tone !== 'positive' && kpi.tone !== 'negative'"
+            [class.text-success]="kpi.tone === 'positive'"
+            [class.text-danger]="kpi.tone === 'negative'"
+          >
+            {{ kpi.delta }}
+          </span>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+<div class="row g-4 align-items-stretch">
+  <div class="col-12 col-lg-8">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-3">
+        <div>
+          <div class="fw-bold">Closing Position Trend</div>
+          <div class="text-muted small">Global closing, last 11 business days</div>
+        </div>
+        <app-line-chart [data]="closingTrend()"></app-line-chart>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-3">
+        <div>
+          <div class="fw-bold">Deal Mix</div>
+          <div class="text-muted small">Today's volume by instrument class</div>
+        </div>
+        <app-donut-chart [data]="dealMix()"></app-donut-chart>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-8">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-3">
+        <div>
+          <div class="fw-bold">Borrowing vs. Placement</div>
+          <div class="text-muted small">New volume by instrument, today</div>
+        </div>
+        <app-bar-chart
+          [data]="borrowingVsPlacement()"
+          [seriesLabels]="['Borrowing', 'Placement']"
+          [seriesColors]="['var(--bs-primary)', 'var(--bs-success)']"
+        ></app-bar-chart>
+      </div>
+    </div>
+  </div>
+</div>

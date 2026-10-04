@@ -1,0 +1,57 @@
+<div class="d-flex align-items-center gap-4 flex-wrap donut-chart">
+  <div class="position-relative flex-shrink-0 donut-chart-plot">
+    <svg [attr.viewBox]="'0 0 ' + size + ' ' + size" [attr.width]="size" [attr.height]="size">
+      <circle
+        [attr.cx]="center"
+        [attr.cy]="center"
+        [attr.r]="radius"
+        fill="none"
+        [attr.stroke]="'var(--bs-border-color)'"
+        [attr.stroke-width]="strokeWidth"
+      />
+      @for (seg of segments(); track seg.label) {
+        <circle
+          [attr.cx]="center"
+          [attr.cy]="center"
+          [attr.r]="radius"
+          fill="none"
+          [attr.stroke]="seg.color"
+          [attr.stroke-width]="hoverIndex() === seg.index ? strokeWidth + 4 : strokeWidth"
+          [attr.stroke-dasharray]="seg.dashArray"
+          [attr.stroke-dashoffset]="seg.dashOffset"
+          stroke-linecap="butt"
+          class="donut-chart__segment"
+          [attr.transform]="'rotate(-90 ' + center + ' ' + center + ')'"
+          (mouseenter)="setHover(seg.index)"
+          (mouseleave)="clearHover()"
+        />
+      }
+    </svg>
+
+    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="pointer-events: none;">
+      @if (hovered(); as h) {
+        <span class="fs-5 fw-bold">{{ h.percent }}%</span>
+        <span class="small text-muted">{{ h.label }}</span>
+      } @else {
+        <span class="fs-5 fw-bold">{{ total() | number }}</span>
+        <span class="small text-muted">Total cr.</span>
+      }
+    </div>
+  </div>
+
+  <div class="d-flex flex-column gap-1 flex-fill donut-chart-legend">
+    @for (seg of segments(); track seg.label) {
+      <button
+        type="button"
+        class="btn text-start d-flex align-items-center gap-2 donut-chart-legend-item"
+        [class.bg-body-tertiary]="hoverIndex() === seg.index"
+        (mouseenter)="setHover(seg.index)"
+        (mouseleave)="clearHover()"
+      >
+        <span class="donut-chart-swatch flex-shrink-0" [style.background]="seg.color"></span>
+        <span class="flex-fill text-muted">{{ seg.label }}</span>
+        <span class="fw-semibold">{{ seg.value | number }}{{ suffix() }}</span>
+      </button>
+    }
+  </div>
+</div>

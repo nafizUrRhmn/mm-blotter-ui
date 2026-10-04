@@ -1,0 +1,207 @@
+<app-page-header title="RTGS"></app-page-header>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-2">
+        <span class="text-muted small">Current Bal.</span>
+        <span class="fs-4 fw-bold mb-2">{{ service.currentBalance() | crore }}</span>
+
+        <button class="btn p-0 d-flex align-items-center justify-content-between text-muted small w-100" type="button" (click)="toggleBalanceBreakdown()">
+          <span>BB SOD + Top-up</span>
+          <span class="d-inline-flex align-items-center gap-1 fw-semibold text-body">
+            {{ service.bbSod() + service.topUp() | crore }}
+            <app-icon name="chevron-down" size="13" [class.rotate-180]="balanceBreakdownOpen()" />
+          </span>
+        </button>
+
+        @if (balanceBreakdownOpen()) {
+          <div class="bg-body-tertiary rounded p-3 d-flex flex-column gap-2 small">
+            <div class="d-flex justify-content-between text-muted">
+              <span>BB SOD</span>
+              <span class="fw-semibold text-body">{{ service.bbSod() | crore }}</span>
+            </div>
+            <div class="d-flex justify-content-between text-muted">
+              <span>Top-up</span>
+              <span class="fw-semibold text-body">{{ service.topUp() | crore }}</span>
+            </div>
+          </div>
+        }
+
+        <div class="d-flex justify-content-between text-muted small">
+          <span>BB settled</span>
+          <span class="fw-semibold text-body">{{ service.bbSettled() | crore: true }}</span>
+        </div>
+        <div class="d-flex justify-content-between text-muted small ps-2">
+          <span>Settled inflow</span>
+          <span class="fw-semibold text-success">{{ service.settledInflow() | crore: true }}</span>
+        </div>
+        <div class="d-flex justify-content-between text-muted small ps-2">
+          <span>Settled outflow</span>
+          <span class="fw-semibold text-danger">{{ service.settledOutflow() | crore: true }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-2">
+        <span class="text-muted small">Projected Closing Bal.</span>
+        <span class="fs-4 fw-bold mb-2">{{ service.projectedClosingBalance() | crore }}</span>
+
+        <div class="d-flex justify-content-between small">
+          <span class="text-muted">Expected Inflow</span>
+          <span class="fw-semibold text-success">{{ service.expectedInflow() | crore: true }}</span>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span class="text-muted">Expected Outflow</span>
+          <span class="fw-semibold text-danger">{{ service.expectedOutflow() | crore: true }}</span>
+        </div>
+        <div class="d-flex justify-content-between small">
+          <span class="text-muted">Net</span>
+          <span class="fw-semibold" [class.text-success]="service.net() >= 0" [class.text-danger]="service.net() < 0">
+            {{ service.expectedInflow() + service.expectedOutflow() | crore: true }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-2">
+        <span class="text-muted small mb-1">Net</span>
+        @for (row of service.netByType(); track row.type) {
+          <div class="d-flex align-items-center gap-2 small">
+            <span class="type-dot flex-shrink-0" [ngClass]="typeDotClass(row.type)"></span>
+            <span class="flex-fill text-muted">{{ row.type }}</span>
+            <span class="fw-semibold" [class.text-success]="row.amount >= 0" [class.text-danger]="row.amount < 0">
+              {{ row.amount | crore: true }}
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-3">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-2">
+        <span class="text-muted small mb-1">Status Count</span>
+        @for (row of service.statusCounts(); track row.status) {
+          <div class="d-flex align-items-center justify-content-between small">
+            <span [ngClass]="statusTextClass(row.status)">{{ row.status }}</span>
+            <span class="fw-bold">{{ row.count }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="fw-bold fs-6">{{ service.inflow().title }}</span>
+          <span class="fw-bold fs-5 text-success">{{ service.inflow().total | crore: true }}</span>
+        </div>
+        <div class="d-flex flex-column gap-3">
+          @for (sub of service.inflow().subCards; track sub.id) {
+            <app-rtgs-sub-card [card]="sub" [defaultOpen]="sub.id !== 'inflow-forecast'"></app-rtgs-sub-card>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-3">
+        <div class="d-flex align-items-center justify-content-between">
+          <span class="fw-bold fs-6">{{ service.outflow().title }}</span>
+          <span class="fw-bold fs-5 text-danger">{{ service.outflow().total | crore: true }}</span>
+        </div>
+        <div class="d-flex flex-column gap-3">
+          @for (sub of service.outflow().subCards; track sub.id) {
+            <app-rtgs-sub-card [card]="sub" [defaultOpen]="sub.id !== 'outflow-forecast'"></app-rtgs-sub-card>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-3">
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-header bg-body d-flex align-items-center justify-content-between">
+        <span class="fw-bold">Customer Inflow</span>
+        <span class="fw-bold text-success">{{ service.customerInflowTotal() | crore: true }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Customer</th>
+              <th scope="col">Group</th>
+              <th scope="col" class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of service.customerInflow(); track row.customer) {
+              <tr>
+                <td>
+                  {{ row.customer }}
+                  @if (row.forecast) {
+                    <span class="text-primary fw-bold">*</span>
+                  }
+                </td>
+                <td><span class="badge rounded-pill" [ngClass]="groupClass(row.group)">{{ row.group }}</span></td>
+                <td class="text-end fw-semibold text-success">{{ row.amount | crore: true }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-6">
+    <div class="card">
+      <div class="card-header bg-body d-flex align-items-center justify-content-between">
+        <span class="fw-bold">Customer Outflow</span>
+        <span class="fw-bold text-danger">{{ service.customerOutflowTotal() | crore: true }}</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Customer</th>
+              <th scope="col">Group</th>
+              <th scope="col" class="text-end">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of service.customerOutflow(); track row.customer) {
+              <tr>
+                <td>
+                  {{ row.customer }}
+                  @if (row.forecast) {
+                    <span class="text-primary fw-bold">*</span>
+                  }
+                </td>
+                <td><span class="badge rounded-pill" [ngClass]="groupClass(row.group)">{{ row.group }}</span></td>
+                <td class="text-end fw-semibold text-danger">{{ row.amount | crore: true }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="text-body-tertiary small text-center">* Forecast entries — Data added via "Add Forecast" updates in real time.</p>

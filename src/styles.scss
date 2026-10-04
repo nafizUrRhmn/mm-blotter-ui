@@ -1,0 +1,70 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bs-font-sans-serif: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --sidebar-width: 260px;
+  --sidebar-width-collapsed: 76px;
+  --topbar-height: 64px;
+}
+
+body {
+  font-family: var(--bs-font-sans-serif);
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bs-border-color);
+  border-radius: 999px;
+}
+
+/* Reusable "lift on hover" treatment for cards throughout the app. */
+.hover-lift {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--bs-box-shadow) !important;
+  }
+}
+
+/* Reusable colored icon badge (used by stat-card / instrument-card headers). */
+.icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--bs-border-radius-lg, 0.75rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Reusable round icon-button utility, layered on top of Bootstrap's .btn */
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--bs-border-radius-md, 0.5rem);
+  background: transparent;
+  color: var(--bs-secondary-color);
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color);
+  }
+}
+
+/* Chevron rotation for expandable rows */
+.rotate-90 {
+  transform: rotate(90deg);
+  transition: transform 0.15s ease;
+}

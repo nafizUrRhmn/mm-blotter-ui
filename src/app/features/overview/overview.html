@@ -1,0 +1,257 @@
+<app-page-header title="Overview">
+  @if (data(); as d) {
+    @if (d.currentDay) {
+      <span class="badge rounded-pill text-bg-success-subtle text-success-emphasis">Current day · live</span>
+    } @else if (d.reconciliationAllowed) {
+      <span class="badge rounded-pill text-bg-warning-subtle text-warning-emphasis">T-1 blotter · reconciliation open</span>
+    } @else {
+      <span class="badge rounded-pill text-bg-secondary-subtle text-secondary-emphasis">Historic blotter · read-only</span>
+    }
+  }
+</app-page-header>
+
+@if (data(); as d) {
+  <div class="row g-4 align-items-stretch mb-4">
+    <!-- Card 1: Dhaka closing (F56, F57) -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <app-stat-card
+        title="Dhaka Closing"
+        icon="activity"
+        accent="primary"
+        [value]="d.dhaka.closing | crore"
+        [delta]="(d.dhaka.changePct > 0 ? '+' : '') + d.dhaka.changePct + '% vs opening'"
+        [deltaTone]="d.dhaka.changePct >= 0 ? 'positive' : 'negative'"
+        [rows]="dhakaRows()"
+      ></app-stat-card>
+    </div>
+
+    <!-- Card 2: Global closing (F58–F64) -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <div class="card h-100 hover-lift">
+        <div class="card-body d-flex flex-column gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <span class="icon-badge text-bg-info-subtle text-info-emphasis">
+              <app-icon name="layers" size="18" />
+            </span>
+            <span class="text-muted fw-medium small">Global Closing</span>
+          </div>
+          <div class="fs-3 fw-bold">{{ d.global.globalClosing | crore }}</div>
+
+          <div class="d-flex flex-column gap-2 border-top pt-3">
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">Dhaka Closing</span>
+              <span class="fw-semibold text-nowrap">{{ d.global.dhakaClosing | crore }}</span>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">ROC</span>
+              <span class="fw-semibold text-nowrap">{{ d.global.rocTotal | crore }}</span>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">Above {{ d.crr.fortnightRatePct }}%</span>
+              <span class="fw-semibold text-nowrap" [class.text-success]="(d.global.aboveFortnightRequirement ?? 0) >= 0"
+                [class.text-danger]="(d.global.aboveFortnightRequirement ?? 0) < 0">
+                {{ d.global.aboveFortnightRequirement | crore: true }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">Above {{ d.crr.dailyRatePct }}%</span>
+              <span class="fw-semibold text-nowrap" [class.text-success]="(d.global.aboveDailyRequirement ?? 0) >= 0"
+                [class.text-danger]="(d.global.aboveDailyRequirement ?? 0) < 0">
+                {{ d.global.aboveDailyRequirement | crore: true }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">Target</span>
+              <span class="fw-semibold text-nowrap">{{ d.global.target | crore }}</span>
+            </div>
+            <div class="d-flex justify-content-between small">
+              <span class="text-muted">Above Target</span>
+              <span class="fw-semibold text-nowrap" [class.text-success]="d.global.aboveTarget > 0" [class.text-danger]="d.global.aboveTarget < 0">
+                {{ d.global.aboveTarget | crore: true }}
+              </span>
+            </div>
+          </div>
+
+          @if (d.currentDay) {
+            <div *appHasPermission="R.OVERVIEW_UPDATE_TARGET" class="d-flex align-items-center justify-content-between gap-2 border-top pt-3 mt-auto">
+              <span class="text-muted small">Target Closing</span>
+              <div class="d-flex gap-1">
+                <input type="number" min="0.01" step="any" class="form-control form-control-sm text-end" style="width: 110px;"
+                  placeholder="Enter" [(ngModel)]="targetInput" (keyup.enter)="submitTarget()"
+                  [class.is-invalid]="targetInput != null && targetInput <= 0" />
+                <button class="btn btn-sm btn-primary" type="button" (click)="submitTarget()"
+                  [disabled]="targetInput === null || targetInput <= 0">Set</button>
+                @if (d.global.target != null) {
+                  <button class="btn btn-sm btn-outline-secondary" type="button" title="Clear target" (click)="clearTarget()">
+                    <app-icon name="x" size="14" />
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: CRR & SLR (F65–F69) -->
+    <div class="col-12 col-lg-4">
+      <app-stat-card title="CRR & SLR Requirements" icon="check-square" accent="warning" [rows]="crrRows()"></app-stat-card>
+    </div>
+  </div>
+
+  <!-- Cards 4–9 -->
+  <div class="row g-4 align-items-stretch mb-4">
+    @for (card of instrumentCards(); track card.id) {
+      <div class="col-12 col-md-6 col-lg-4">
+        <app-instrument-card [config]="card"></app-instrument-card>
+      </div>
+    }
+  </div>
+
+  <div class="row g-4 align-items-stretch">
+    <!-- Card 10: ROC (F44–F51) -->
+    <div class="col-12 col-xl-7">
+      <div class="card h-100">
+        <div class="card-body d-flex flex-column gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <span class="icon-badge text-bg-secondary-subtle text-secondary-emphasis"><app-icon name="grid" size="18" /></span>
+            <span class="text-muted fw-medium small">ROC Closing</span>
+            <span class="ms-auto fs-5 fw-bold">{{ d.roc.total | crore }}</span>
+          </div>
+          <div class="text-muted small">Closing = Opening + Deposit − Withdrawal − TT Out + TT In. Reconciliation adjusts the next day's opening.</div>
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0 small">
+              <thead>
+                <tr>
+                  <th>ROC</th>
+                  <th class="text-end">Opening</th>
+                  <th class="text-end">Deposit</th>
+                  <th class="text-end">Withdrawal</th>
+                  <th class="text-end">TT In</th>
+                  <th class="text-end">TT Out</th>
+                  <th class="text-end">Recon.</th>
+                  <th class="text-end">Closing</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (r of d.roc.regions; track r.key) {
+                  <tr role="button" (click)="toggleRoc(r.key)">
+                    <td class="fw-semibold">
+                      <app-icon name="chevron-right" size="12" [class.rotate-90]="rocOpen() === r.key" /> {{ r.label }}
+                    </td>
+                    <td class="text-end">{{ r.opening | crore }}</td>
+                    <td class="text-end text-success">{{ r.deposit | crore }}</td>
+                    <td class="text-end text-danger">{{ r.withdrawal | crore }}</td>
+                    <td class="text-end">{{ r.ttIn | crore }}</td>
+                    <td class="text-end">{{ r.ttOut | crore }}</td>
+                    <td class="text-end">{{ r.reconciliation | crore: true }}</td>
+                    <td class="text-end fw-bold">{{ r.closing | crore }}</td>
+                  </tr>
+                  @if (rocOpen() === r.key) {
+                    <tr>
+                      <td colspan="8" class="bg-body-tertiary">
+                        @for (e of r.entries; track e.id) {
+                          <div class="d-flex align-items-center gap-2 py-1">
+                            <span class="badge text-bg-light border">{{ entryLabel(e.entryType) }}</span>
+                            <span class="fw-semibold">{{ e.amount | crore }}</span>
+                            <span class="text-muted text-truncate">{{ e.remarks }}</span>
+                            <span class="text-muted ms-auto text-nowrap">{{ e.enteredBy }} · {{ e.createdAt | date: 'shortTime' }}</span>
+                            @if (canEditRoc() && ((d.currentDay && e.entryType !== 'RECONCILIATION') || (d.reconciliationAllowed && e.entryType === 'RECONCILIATION'))) {
+                              <button class="btn btn-sm btn-link text-danger p-0" type="button" title="Delete" (click)="deleteRocEntry(e.id)">
+                                <app-icon name="trash" size="14" />
+                              </button>
+                            }
+                          </div>
+                        } @empty {
+                          <span class="text-muted">No entries for this ROC.</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          @if (canEditRoc()) {
+            <div class="d-flex flex-wrap align-items-end gap-2 border-top pt-3 mt-auto">
+              <select class="form-select form-select-sm w-auto" [(ngModel)]="rocBranch" aria-label="ROC">
+                @for (r of d.roc.regions; track r.key) {
+                  <option [value]="r.key">{{ r.label }}</option>
+                }
+              </select>
+              <select class="form-select form-select-sm w-auto" [(ngModel)]="rocType" aria-label="Entry type">
+                @for (t of rocTypes(); track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+              <input type="number" step="any" class="form-control form-control-sm" style="width: 110px;" placeholder="Amount (cr.)" [(ngModel)]="rocAmount" />
+              <input type="text" class="form-control form-control-sm flex-fill" style="min-width: 140px;" maxlength="300"
+                [placeholder]="rocType === 'RECONCILIATION' ? 'Remarks (required)' : 'Remarks'" [(ngModel)]="rocRemarks" />
+              <button class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1" type="button" (click)="addRocEntry()"
+                [disabled]="!rocAmount || (rocType === 'RECONCILIATION' && !rocRemarks.trim())">
+                <app-icon name="plus" size="14" /> Add
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 11: Reconciliation (F52–F55) -->
+    <div class="col-12 col-xl-5">
+      <div class="card h-100">
+        <div class="card-body d-flex flex-column gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <span class="icon-badge text-bg-danger-subtle text-danger-emphasis"><app-icon name="check-square" size="18" /></span>
+            <span class="text-muted fw-medium small">DAB Reconciliation</span>
+            <span class="ms-auto fs-5 fw-bold">{{ d.reconciliation.net | crore: true }}</span>
+          </div>
+          <div class="d-flex justify-content-between small">
+            <span class="text-muted">Recon Inflow</span>
+            <span class="fw-semibold text-success">{{ d.reconciliation.inflow | crore: true }}</span>
+          </div>
+          <div class="d-flex justify-content-between small">
+            <span class="text-muted">Recon Outflow</span>
+            <span class="fw-semibold text-danger">{{ d.reconciliation.outflow | crore: true }}</span>
+          </div>
+          <div class="text-muted small">The net adjusts the next business day's Dhaka opening. Entered by TBO on the T-1 blotter only.</div>
+
+          <div class="d-flex flex-column gap-2 border-top pt-3">
+            @for (e of d.reconciliation.entries; track e.id) {
+              <div class="d-flex align-items-start gap-2 small">
+                <span class="fw-semibold text-nowrap" [class.text-success]="e.amount > 0" [class.text-danger]="e.amount < 0">{{ e.amount | crore: true }}</span>
+                <span class="flex-fill">{{ e.remarks }}<br /><span class="text-muted">{{ e.enteredBy }} · {{ e.createdAt | date: 'short' }}</span></span>
+                @if (d.reconciliationAllowed) {
+                  <button *appHasPermission="R.RECON_WRITE" class="btn btn-sm btn-link text-danger p-0" type="button" title="Delete" (click)="deleteReconciliation(e.id)">
+                    <app-icon name="trash" size="14" />
+                  </button>
+                }
+              </div>
+            } @empty {
+              <span class="text-muted small">No reconciliation entries.</span>
+            }
+          </div>
+
+          @if (d.reconciliationAllowed) {
+            <div *appHasPermission="R.RECON_WRITE" class="d-flex flex-column gap-2 border-top pt-3 mt-auto">
+              <div class="d-flex gap-2">
+                <select class="form-select form-select-sm w-auto" [(ngModel)]="reconDirection" aria-label="Direction">
+                  <option value="IN">Inflow (+)</option>
+                  <option value="OUT">Outflow (−)</option>
+                </select>
+                <input type="number" min="0.01" step="any" class="form-control form-control-sm" placeholder="Amount (cr.)" [(ngModel)]="reconAmount" />
+              </div>
+              <textarea class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Remarks (required, audit-logged)" [(ngModel)]="reconRemarks"></textarea>
+              <button class="btn btn-sm btn-primary align-self-end d-inline-flex align-items-center gap-1" type="button" (click)="addReconciliation()"
+                [disabled]="!reconAmount || reconAmount <= 0 || !reconRemarks.trim()">
+                <app-icon name="plus" size="14" /> Add entry
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}

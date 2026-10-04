@@ -1,0 +1,113 @@
+<app-page-header title="CRR Monitor">
+  @if (data(); as d) {
+    <div class="btn-group btn-group-sm" role="group" aria-label="Month">
+      <button class="btn btn-outline-secondary" type="button" (click)="go(d.previousMonth)" aria-label="Previous month">
+        <app-icon name="chevron-left" size="14" />
+      </button>
+      <span class="btn btn-outline-secondary disabled text-body fw-semibold" style="min-width: 150px;">{{ monthLabel() }}</span>
+      <button class="btn btn-outline-secondary" type="button" [disabled]="!canGoNext()" (click)="go(d.nextMonth)" aria-label="Next month">
+        <app-icon name="chevron-right" size="14" />
+      </button>
+    </div>
+  }
+</app-page-header>
+
+@if (data(); as d) {
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="fw-bold fs-6 mb-3">CRR Requirements Summary</div>
+      <div class="row g-4">
+        <div class="col-6 col-md-4 col-xl-2 d-flex flex-column gap-2">
+          <span class="text-muted small">This Month TDTL</span>
+          <span class="fs-5 fw-bold">{{ d.summary.thisMonthTdtl | crore }}</span>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 d-flex flex-column gap-2">
+          <span class="text-muted small">This Month {{ d.rates.daily }}% CRR Req</span>
+          <span class="fs-5 fw-bold">{{ d.summary.thisMonthDailyRequirement | crore }}</span>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 d-flex flex-column gap-2">
+          <span class="text-muted small">This Month {{ d.rates.fortnight }}% CRR Req</span>
+          <span class="fs-5 fw-bold">{{ d.summary.thisMonthFortnightRequirement | crore }}</span>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 d-flex flex-column gap-2">
+          <span class="text-muted small">Next Month TDTL</span>
+          <span class="fs-5 fw-bold">{{ d.summary.nextMonthTdtl | crore }}</span>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 d-flex flex-column gap-2">
+          <span class="text-muted small">Next Month {{ d.rates.daily }}% CRR Req</span>
+          <span class="fs-5 fw-bold">{{ d.summary.nextMonthDailyRequirement | crore }}</span>
+        </div>
+        <div class="col-6 col-md-4 col-xl-2 d-flex flex-column gap-2">
+          <span class="text-muted small">Next Month {{ d.rates.fortnight }}% CRR Req</span>
+          <span class="fs-5 fw-bold">{{ d.summary.nextMonthFortnightRequirement | crore }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @for (f of d.fortnights; track f.label) {
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="d-flex flex-wrap align-items-baseline gap-3">
+          <div class="fw-bold fs-6">{{ f.label }}</div>
+          <div class="text-muted small">{{ f.from | date: 'dd MMM' }} – {{ f.to | date: 'dd MMM' }}</div>
+          @if (f.averageGlobal != null) {
+            <div class="ms-auto small">
+              <span class="text-muted">Average Global</span> <span class="fw-semibold">{{ f.averageGlobal | crore }}</span>
+              <span class="text-muted ms-3">{{ d.rates.fortnight }}% Req.</span> <span class="fw-semibold">{{ f.requirement | crore }}</span>
+              <span class="text-muted ms-3">Average Excess</span>
+              <span class="fw-semibold" [class.text-success]="(f.averageExcess ?? 0) >= 0" [class.text-danger]="(f.averageExcess ?? 0) < 0">{{ f.averageExcess | crore: true }}</span>
+            </div>
+          }
+        </div>
+        <div class="text-muted small mt-1 mb-3">
+          Global = Dhaka + ROCs · Maintained % = Global ÷ TDTL × 100 · Weekends and holidays carry the previous balance forward.
+        </div>
+
+        <div class="table-responsive border rounded">
+          <table class="table table-sm table-hover align-middle mb-0 crr-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                @for (branch of d.branches; track branch.key) {
+                  <th scope="col" class="text-end">{{ branch.label }}</th>
+                }
+                <th scope="col" class="text-end">Global</th>
+                <th scope="col" class="text-end">Maintained</th>
+                <th scope="col" class="text-end">+/- {{ d.rates.daily }}%</th>
+                <th scope="col" class="text-end">+/- {{ d.rates.dailyPlusHalf }}%</th>
+                <th scope="col" class="text-end">+/- {{ d.rates.fortnight }}%</th>
+                <th scope="col" class="text-end">Cum. Excess</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of f.rows; track row.date) {
+                <tr [class.text-body-tertiary]="row.carriedForward">
+                  <td class="fw-semibold text-nowrap">
+                    {{ row.label }}
+                    @if (row.carriedForward) {
+                      <span class="badge text-bg-light border ms-1" title="Weekend / holiday — balance carried forward">c/f</span>
+                    }
+                  </td>
+                  @for (branch of d.branches; track branch.key) {
+                    <td class="text-end">{{ row.branches[branch.key] | crore }}</td>
+                  }
+                  <td class="text-end fw-bold">{{ row.global | crore }}</td>
+                  <td class="text-end">{{ row.maintainedPct != null ? row.maintainedPct + '%' : '—' }}</td>
+                  <td class="text-end" [class.text-success]="(row.excessDaily ?? 0) >= 0" [class.text-danger]="(row.excessDaily ?? 0) < 0">{{ row.excessDaily | crore: true }}</td>
+                  <td class="text-end" [class.text-success]="(row.excessDailyPlusHalf ?? 0) >= 0" [class.text-danger]="(row.excessDailyPlusHalf ?? 0) < 0">{{ row.excessDailyPlusHalf | crore: true }}</td>
+                  <td class="text-end fw-semibold" [class.text-success]="(row.excessFortnight ?? 0) >= 0" [class.text-danger]="(row.excessFortnight ?? 0) < 0">{{ row.excessFortnight | crore: true }}</td>
+                  <td class="text-end fw-semibold" [class.text-success]="(row.cumulativeExcess ?? 0) >= 0" [class.text-danger]="(row.cumulativeExcess ?? 0) < 0">{{ row.cumulativeExcess | crore: true }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td [attr.colspan]="d.branches.length + 7" class="text-center text-muted py-4">No positions yet for this fortnight.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+}

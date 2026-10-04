@@ -1,0 +1,10 @@
+<div class="d-flex" style="min-height: 100vh;">
+  <app-sidebar />
+  <div class="d-flex flex-column flex-fill" style="min-width: 0;">
+    <app-topbar />
+    <main class="flex-fill d-flex flex-column gap-3 gap-md-4 p-3 p-md-4" style="min-width: 0;">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+<app-toasts />

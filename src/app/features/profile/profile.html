@@ -1,0 +1,67 @@
+<app-page-header title="My Profile"></app-page-header>
+
+<div class="d-flex flex-column gap-4" style="max-width: 560px;">
+  <div class="card">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div
+          class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary-subtle text-primary-emphasis fw-bold flex-shrink-0"
+          style="width: 64px; height: 64px; font-size: 1.3rem;"
+        >
+          {{ profile().initials }}
+        </div>
+        <div class="flex-fill" style="min-width: 160px;">
+          <div class="fs-5 fw-bold">{{ profile().name }}</div>
+          <div class="text-muted small">{{ profile().email }}</div>
+          <span class="badge rounded-pill text-bg-primary-subtle text-primary-emphasis mt-2">{{ profile().role }}</span>
+        </div>
+      </div>
+
+      @if (!sections().length) {
+        <div class="alert alert-warning py-2 small mt-3 mb-0" role="status">
+          No MM Blotter menus are assigned to your ACS business group.
+        </div>
+      }
+
+      <hr class="my-4" />
+
+      <div class="d-flex flex-column gap-4">
+        <div>
+          <label class="form-label small fw-semibold text-muted" for="profile-username">Username</label>
+          <input id="profile-username" type="text" class="form-control" [value]="session()?.username ?? ''" disabled />
+        </div>
+
+        <div>
+          <label class="form-label small fw-semibold text-muted" for="profile-email">Email</label>
+          <input id="profile-email" type="email" class="form-control" [value]="profile().email" disabled />
+        </div>
+
+        <div>
+          <label class="form-label small fw-semibold text-muted">ACS Roles</label>
+          <div class="d-flex flex-wrap gap-2">
+            @for (role of session()?.roles ?? []; track role) {
+              <span class="badge rounded-pill text-bg-secondary">{{ role }}</span>
+            } @empty {
+              <span class="small text-muted">No MM Blotter roles.</span>
+            }
+          </div>
+          <div class="form-text d-flex align-items-center gap-1">
+            <app-icon name="lock" size="14" />
+            Name, e-mail, password and roles are managed in the Access Control Service (ACS). Role changes
+            apply at your next token refresh.
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label small fw-semibold text-muted">Theme Preference</label>
+          <div class="d-flex align-items-center justify-content-between border rounded p-3">
+            <span>{{ theme.theme() === 'light' ? 'Light' : 'Dark' }} mode</span>
+            <button type="button" class="btn btn-icon" (click)="theme.toggle()">
+              <app-icon [name]="theme.theme() === 'light' ? 'sun' : 'moon'" size="16" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

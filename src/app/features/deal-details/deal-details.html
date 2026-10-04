@@ -1,0 +1,149 @@
+<app-page-header title="Deal Details">
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <div class="input-group input-group-sm rounded-pill overflow-hidden search-box">
+      <span class="input-group-text bg-body border-0"><app-icon name="search" size="16" /></span>
+      <input
+        type="text"
+        class="form-control border-0 shadow-none"
+        placeholder="Search deals..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+      />
+    </div>
+
+    <div class="dropdown">
+      <button class="btn btn-outline-secondary btn-sm rounded-pill d-inline-flex align-items-center gap-2" type="button" (click)="toggleFilterPanel()">
+        <app-icon name="filter" size="16" />
+        Filter
+        @if (filter.isFiltered()) {
+          <span class="filter-dot rounded-circle bg-primary"></span>
+        }
+      </button>
+
+      <div class="dropdown-menu p-3 shadow-lg filter-panel" [class.show]="filterOpen()">
+        <div class="mb-2">
+          <div class="text-uppercase text-muted fw-bold small mb-2">Show Cards</div>
+          @for (card of filter.cardOptions(); track card.id) {
+            <button class="btn w-100 text-start d-flex align-items-center gap-2 py-1" type="button" (click)="toggleCard(card.id)">
+              <span class="form-check-input m-0" [class.bg-primary]="isCardSelected(card.id)" style="pointer-events: none;">
+                <input type="checkbox" class="d-none" [checked]="isCardSelected(card.id)" />
+              </span>
+              {{ card.label }}
+            </button>
+          }
+        </div>
+
+        <hr />
+
+        <div class="mb-2">
+          <div class="text-uppercase text-muted fw-bold small mb-2">Show Deal Type</div>
+          @for (group of filter.dealTypeGroups(); track group.id) {
+            <div class="fw-bold small mt-2 mb-1">{{ group.title }}</div>
+            @for (option of group.options; track option.key) {
+              <button class="btn w-100 text-start d-flex align-items-center gap-2 py-1" type="button" (click)="toggleDealType(option.key)">
+                <input type="checkbox" class="form-check-input m-0" style="pointer-events: none;" [checked]="isDealTypeSelected(option.key)" />
+                {{ option.label }}
+              </button>
+            }
+          }
+        </div>
+
+        <hr />
+
+        <div class="d-flex justify-content-center">
+          <button class="btn btn-link btn-sm" type="button" (click)="filter.reset()">Reset filters</button>
+        </div>
+      </div>
+    </div>
+
+    <button *appHasPermission="R.DEAL_EXPORT" class="btn btn-outline-secondary btn-sm rounded-pill d-inline-flex align-items-center gap-2" type="button" [disabled]="!groups().length" (click)="exportToExcel()">
+      <app-icon name="download" size="16" />
+      Export
+    </button>
+  </div>
+</app-page-header>
+
+<div class="d-flex flex-column gap-4">
+  @for (group of groups(); track group.id) {
+    <div class="card">
+      <div class="card-header fw-bold bg-body">{{ group.title }}</div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Type</th>
+              <th scope="col">Counterparty</th>
+              <th scope="col" class="text-end">Vol. (Cr.)</th>
+              <th scope="col" class="text-end">Rate</th>
+              <th scope="col" class="text-end">Tenor</th>
+              <th scope="col">Payment</th>
+              <th scope="col">Status</th>
+              <th scope="col"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (deal of group.deals; track deal.id) {
+              <tr role="button" (click)="toggleRow(deal.id)">
+                <td>
+                  <span class="badge rounded-pill" [class.text-bg-success-subtle]="deal.typeTone === 'buy'" [class.text-success-emphasis]="deal.typeTone === 'buy'" [class.text-bg-danger-subtle]="deal.typeTone === 'sell'" [class.text-danger-emphasis]="deal.typeTone === 'sell'">
+                    {{ deal.type }}
+                  </span>
+                  @if (deal.forecast) {
+                    <span class="badge rounded-pill text-bg-warning-subtle text-warning-emphasis ms-1">Forecast</span>
+                  }
+                </td>
+                <td>{{ deal.counterparty }}</td>
+                <td class="text-end fw-semibold" [class.text-success]="deal.volume >= 0" [class.text-danger]="deal.volume < 0">
+                  {{ deal.volume >= 0 ? '+' : '' }}{{ deal.volume | number: '1.0-2' }}
+                </td>
+                <td class="text-end">{{ deal.rate != null ? deal.rate + (deal.dealTypeKey.startsWith('fx-') ? '' : '%') : '—' }}</td>
+                <td class="text-end">{{ deal.tenor ?? '—' }}</td>
+                <td>
+                  <span class="badge rounded-pill" [ngClass]="statusClass(deal.paymentStatus)">{{ deal.paymentStatus }}</span>
+                </td>
+                <td>
+                  @if (deal.settlementStatus) {
+                    <span class="badge rounded-pill" [ngClass]="settlementClass(deal.settlementStatus)">{{ deal.settlementStatus }}</span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="text-end">
+                  <app-icon name="chevron-down" size="16" [class.rotate-180]="expanded() === deal.id" />
+                </td>
+              </tr>
+              @if (expanded() === deal.id) {
+                <tr class="bg-body-tertiary">
+                  <td colspan="8" class="small">
+                    <div class="d-flex flex-wrap align-items-center gap-4 py-1">
+                      <span><span class="text-muted">Deal No:</span> <span class="fw-semibold">{{ deal.dealNo ?? '— (forecast)' }}</span></span>
+                      <span><span class="text-muted">Payment mode:</span> {{ deal.paymentStatus }}</span>
+                      <span>
+                        <span class="text-muted">Status:</span> {{ deal.settlementStatus ?? '—' }}
+                        @if (!deal.statusEditable && deal.paymentStatus === 'RTGS' && !deal.forecast) {
+                          <span class="text-muted">(from Iflash)</span>
+                        }
+                      </span>
+                      @if (deal.statusEditable) {
+                        <span *appHasPermission="R.DEAL_UPDATE_STATUS" class="d-inline-flex align-items-center gap-2 ms-auto" (click)="$event.stopPropagation()">
+                          <span class="text-muted">Update status</span>
+                          <select class="form-select form-select-sm w-auto" [ngModel]="deal.settlementStatus" (ngModelChange)="setStatus(deal, $event)" aria-label="Settlement status">
+                            @for (s of statuses; track s) {
+                              <option [value]="s">{{ s }}</option>
+                            }
+                          </select>
+                        </span>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @empty {
+    <div class="border border-dashed rounded-4 p-5 text-center text-muted" style="border-style: dashed;">No deals match your search.</div>
+  }
+</div>

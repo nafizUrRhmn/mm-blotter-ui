@@ -1,0 +1,48 @@
+.topbar {
+  height: var(--topbar-height);
+  z-index: 1020;
+}
+
+.topbar-date {
+  cursor: pointer;
+}
+
+/* Native date picker stretched invisibly over the pill, so the whole pill opens it. */
+.topbar-date-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.topbar-date-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.topbar-search {
+  max-width: 420px;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .topbar-menu {
+    display: inline-flex !important;
+  }
+  .topbar-collapse {
+    display: none !important;
+  }
+  .topbar-date-text {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar-search {
+    display: none !important;
+  }
+}

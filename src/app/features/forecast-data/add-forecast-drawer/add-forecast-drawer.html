@@ -1,0 +1,94 @@
+@if (open()) {
+  <div class="offcanvas-backdrop fade show" (click)="close()"></div>
+}
+
+<aside class="offcanvas offcanvas-end" [class.show]="open()" tabindex="-1" style="width: 460px; max-width: 100vw;">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title fw-bold">{{ editing() ? 'Edit Forecast' : 'Add Forecast' }}</h5>
+    <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
+  </div>
+
+  <div class="offcanvas-body d-flex flex-column gap-4">
+    @if (canCreate()) {
+      <form class="d-flex flex-column gap-3" (ngSubmit)="submit()" novalidate>
+        @if (error()) {
+          <div class="alert alert-danger py-2 small mb-0" role="alert">{{ error() }}</div>
+        }
+
+        @for (g of groups(); track g.title) {
+          <div>
+            <div class="small fw-semibold text-muted mb-1">{{ g.title }}</div>
+            <div class="d-flex flex-wrap gap-2">
+              @for (t of g.types; track t.key) {
+                <button type="button" class="btn btn-sm rounded-pill"
+                  [class.btn-primary]="selectedType()?.key === t.key"
+                  [class.btn-outline-secondary]="selectedType()?.key !== t.key"
+                  (click)="selectType(t)">
+                  {{ t.label }}
+                  <span class="opacity-75">{{ t.direction === 'Inflow' ? '+' : '−' }}</span>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="row g-2">
+          <div class="col-12">
+            <label class="form-label small fw-semibold text-muted" for="forecast-counterparty">Counterparty</label>
+            <input id="forecast-counterparty" type="text" class="form-control" name="counterparty" maxlength="120" placeholder="e.g. Sonali Bank Ltd" [(ngModel)]="counterparty" />
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold text-muted" for="forecast-volume">Volume (Cr.)</label>
+            <input id="forecast-volume" type="number" class="form-control" name="volume" placeholder="0" min="0" step="any" [(ngModel)]="volume" />
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold text-muted" for="forecast-expected-time">Expected Time</label>
+            <input id="forecast-expected-time" type="text" class="form-control" name="expectedTime" maxlength="20" placeholder="e.g. 10:30 AM" [(ngModel)]="expectedTime" />
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold text-muted" for="forecast-date">Date</label>
+            <input id="forecast-date" type="date" class="form-control" name="businessDate" [min]="minDate()" [(ngModel)]="businessDate" />
+          </div>
+          <div class="col-6">
+            <label class="form-label small fw-semibold text-muted" for="forecast-method">Settlement</label>
+            <select id="forecast-method" class="form-select" name="settlementMethod" [(ngModel)]="settlementMethod">
+              @for (m of methods; track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2">
+          @if (editing()) {
+            <button type="button" class="btn btn-outline-secondary" (click)="service.editing.set(null)">Cancel edit</button>
+          } @else {
+            <button type="button" class="btn btn-outline-secondary" (click)="close()">Close</button>
+          }
+          <button type="submit" class="btn btn-dark" [disabled]="saving()">
+            {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Add Forecast' }}
+          </button>
+        </div>
+      </form>
+    }
+
+    <div>
+      <div class="small fw-semibold text-muted mb-2">Forecasts on this date</div>
+      <div class="d-flex flex-column gap-2">
+        @for (e of editable(); track e.id) {
+          <div class="d-flex align-items-center gap-2 small border rounded px-2 py-1" [class.border-primary]="editing()?.id === e.id">
+            <span class="fw-semibold text-nowrap">{{ e.type }}</span>
+            <span class="text-truncate flex-fill">{{ e.counterparty }} · {{ e.expectedTime }}</span>
+            <span class="fw-semibold text-nowrap" [class.text-success]="e.volume >= 0" [class.text-danger]="e.volume < 0">{{ e.volume | crore: true }}</span>
+            @if (canCreate()) {
+              <button type="button" class="btn btn-sm btn-link p-0" title="Edit" (click)="edit(e)"><app-icon name="edit" size="14" /></button>
+              <button type="button" class="btn btn-sm btn-link text-danger p-0" title="Delete" (click)="remove(e)"><app-icon name="trash" size="14" /></button>
+            }
+          </div>
+        } @empty {
+          <span class="text-muted small">No editable forecasts on this date.</span>
+        }
+      </div>
+    </div>
+  </div>
+</aside>

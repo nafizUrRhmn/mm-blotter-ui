@@ -1,0 +1,33 @@
+<div class="d-flex flex-column gap-3">
+  <div class="d-flex gap-3 small text-muted">
+    @for (label of seriesLabels(); track label; let i = $index) {
+      <span class="d-inline-flex align-items-center gap-2">
+        <span class="bar-chart-swatch" [style.background]="seriesColors()[i]"></span>
+        {{ label }}
+      </span>
+    }
+  </div>
+
+  <div class="d-flex align-items-end gap-3 px-2 bar-chart-plot">
+    @for (group of data(); track group.label) {
+      <div class="d-flex flex-column align-items-center h-100 flex-fill bar-chart-group">
+        <div class="d-flex align-items-end justify-content-center gap-1 flex-fill w-100">
+          @for (value of group.values; track $index) {
+            <div
+              class="bar-chart-bar position-relative"
+              [style.height.%]="barHeight(value)"
+              [style.background]="seriesColors()[$index]"
+              (mouseenter)="setHover(group.label, $index, value)"
+              (mouseleave)="clearHover()"
+            >
+              @if (hover()?.group === group.label && hover()?.series === $index) {
+                <span class="bar-chart-tooltip bg-dark text-white rounded small fw-semibold">{{ value | number }}{{ suffix() }}</span>
+              }
+            </div>
+          }
+        </div>
+        <span class="small text-muted mt-2">{{ group.label }}</span>
+      </div>
+    }
+  </div>
+</div>

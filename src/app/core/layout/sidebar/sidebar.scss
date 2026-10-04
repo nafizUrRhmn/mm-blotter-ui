@@ -1,0 +1,111 @@
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: var(--sidebar-width);
+  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1030;
+
+  &.collapsed {
+    width: var(--sidebar-width-collapsed);
+  }
+}
+
+.sidebar-workspace-link:hover {
+  background: var(--bs-tertiary-bg);
+}
+
+.sidebar-link {
+  transition: background 150ms ease, color 150ms ease;
+
+  &:hover {
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color) !important;
+  }
+
+  &.active {
+    background: var(--bs-tertiary-bg);
+    color: var(--bs-body-color) !important;
+    font-weight: 600;
+  }
+}
+
+.sidebar-scrim {
+  display: none;
+}
+
+.sidebar-section-title {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+/* Collapsible group header (MM Blotter ▾, FX Blotter ▾) */
+.sidebar-group {
+  font-size: inherit;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+  }
+}
+
+.sidebar-chevron {
+  transition: transform 150ms ease;
+
+  &.closed {
+    transform: rotate(-90deg);
+  }
+}
+
+/* Items inside a group are indented under the group's icon. */
+.sidebar-children {
+  padding-left: 1.75rem;
+}
+
+/* Favorites star: shown on hover, always shown (filled) for pinned items. */
+.sidebar-fav {
+  color: var(--bs-secondary-color);
+  opacity: 0;
+  line-height: 0;
+  transition: opacity 150ms ease, color 150ms ease;
+
+  &:hover,
+  &:focus-visible {
+    color: var(--bs-warning);
+    opacity: 1;
+  }
+
+  &.is-fav {
+    color: var(--bs-warning);
+    opacity: 1;
+
+    ::ng-deep svg {
+      fill: currentColor;
+    }
+  }
+}
+
+.sidebar-link:hover .sidebar-fav {
+  opacity: 1;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    transform: translateX(-100%);
+    box-shadow: var(--bs-box-shadow-lg);
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+  }
+
+  .sidebar-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 1025;
+  }
+}

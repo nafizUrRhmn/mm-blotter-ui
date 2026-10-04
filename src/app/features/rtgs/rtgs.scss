@@ -1,0 +1,11 @@
+.type-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+  transition: transform 150ms ease;
+}

@@ -1,0 +1,104 @@
+<app-page-header title="Forecast Data">
+  @if (canCreate() && openDay()) {
+    <button class="btn btn-dark rounded-pill" type="button" (click)="service.openDrawer()">+ Add Forecast</button>
+  }
+</app-page-header>
+
+<div class="row g-4 mb-4">
+  <div class="col-12 col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-2">
+        <span class="text-muted small">Expected Inflow</span>
+        <span class="fs-3 fw-bold text-success">{{ expectedInflow() | crore: true }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-2">
+        <span class="text-muted small">Expected Outflow</span>
+        <span class="fs-3 fw-bold text-danger">{{ expectedOutflow() | crore: true }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-md-4">
+    <div class="card h-100">
+      <div class="card-body d-flex flex-column gap-2">
+        <span class="text-muted small">Net Forecast</span>
+        <span class="fs-3 fw-bold" [class.text-success]="netForecast() >= 0" [class.text-danger]="netForecast() < 0">
+          {{ netForecast() | crore: true }}
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
+
+@for (section of sections(); track section.direction) {
+  <div class="card mb-4">
+    <div class="card-header bg-body fw-bold d-flex align-items-center gap-2">
+      <span [class.text-success]="section.direction === 'Inflow'" [class.text-danger]="section.direction === 'Outflow'">{{ section.direction }}</span>
+      <span class="text-muted fw-normal small">· {{ ui.selectedDate() }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 forecast-table">
+        <thead>
+          <tr>
+            <th scope="col">Type</th>
+            <th scope="col">Counterparty</th>
+            <th scope="col" class="text-end">Amount (Cr.)</th>
+            <th scope="col">Expected Time</th>
+            <th scope="col">Settlement</th>
+            <th scope="col">User ID</th>
+            <th scope="col" class="text-end">Actual</th>
+            <th scope="col" class="text-end">Gap</th>
+            <th scope="col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (group of section.groups; track group.type) {
+            @for (entry of group.rows; track entry.id; let first = $first) {
+              <tr [class.opacity-50]="entry.excluded">
+                <td class="fw-semibold">{{ first ? group.type : '' }}</td>
+                <td>{{ entry.counterparty }}</td>
+                <td class="text-end fw-semibold" [class.text-success]="entry.volume >= 0" [class.text-danger]="entry.volume < 0">
+                  {{ entry.volume | crore: true }}
+                </td>
+                <td>{{ entry.expectedTime }}</td>
+                <td>{{ entry.settlementMethod }}</td>
+                <td>{{ entry.userId }}</td>
+                <td class="text-end">{{ entry.actualAmount | crore: true }}</td>
+                <td class="text-end">
+                  @if (entry.gap != null) {
+                    <span class="fw-semibold" [class.text-success]="entry.gap >= 0" [class.text-danger]="entry.gap < 0">{{ entry.gap | crore: true }}</span>
+                  } @else {
+                    <span class="text-body-tertiary">—</span>
+                  }
+                </td>
+                <td class="text-end text-nowrap">
+                  @if (canCreate() && entry.editable) {
+                    <button class="btn btn-sm btn-link" type="button" (click)="service.openDrawer(entry)">Edit</button>
+                  }
+                  @if (canExclude() && openDay()) {
+                    <button class="btn btn-sm rounded-pill" type="button"
+                      [class.btn-outline-secondary]="!entry.excluded" [class.btn-primary]="entry.excluded"
+                      (click)="toggleExcluded(entry.id)">
+                      {{ entry.excluded ? 'Excluded' : 'Exclude' }}
+                    </button>
+                  } @else if (entry.excluded) {
+                    <span class="badge rounded-pill text-bg-secondary">Excluded</span>
+                  }
+                </td>
+              </tr>
+            }
+          } @empty {
+            <tr>
+              <td colspan="9" class="text-center text-muted py-4">No {{ section.direction.toLowerCase() }} forecasts on this date.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<app-add-forecast-drawer></app-add-forecast-drawer>
